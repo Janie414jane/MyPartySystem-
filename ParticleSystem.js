@@ -6,9 +6,9 @@ class ParticleSystem {
 
     addParticle() {
         if (this.particles.length >= 400) return; // 화면에 너무 많아지지 않게 제한
-        // 처음엔 중앙에서, 이후엔 기존 세균 근처에서 증식
+        // 대부분은 기존 입자 근처에서, 일부는 중심에서 증식 (뭉쳐서 확산)
         let pos = this.origin;
-        if (this.particles.length > 0) {
+        if (this.particles.length > 0 && random(1) > 0.3) {
             let parent = random(this.particles);
             pos = p5.Vector.add(parent.position, p5.Vector.random2D().mult(4));
         }
