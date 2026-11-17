@@ -28,12 +28,22 @@ class Particle {
 
         this.acceleration = p5.Vector.add(away, swirl).add(jitter);
 
+        // 손가락을 중심으로 세균이 사방으로 밀려남
+        if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+            let fromFinger = p5.Vector.sub(this.position, createVector(mouseX, mouseY));
+            let fd = fromFinger.mag();
+            if (fd > 0 && fd < 120) {
+                let push = map(fd, 0, 120, 0.6, 0); // 가까울수록 강하게
+                this.acceleration.add(fromFinger.normalize().mult(push));
+            }
+        }
+
         // 세면대 물 영역(타원) 안에 머물기
         let nx = (this.position.x - width / 2) / 300;
         let ny = (this.position.y - height / 2) / 145;
         if (nx * nx + ny * ny > 1) {
             let back = p5.Vector.sub(center, this.position);
-            if (back.mag() > 0) this.acceleration.add(back.normalize().mult(0.12));
+            if (back.mag() > 0) this.acceleration.add(back.normalize().mult(0.35));
         }
 
         this.velocity.add(this.acceleration);

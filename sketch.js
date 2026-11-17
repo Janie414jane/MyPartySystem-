@@ -41,8 +41,24 @@ function drawSink() {
   sink.rect(width / 2 - 8, 52, 66, 14, 6);
 }
 
+function drawFinger() {
+  push();
+  translate(mouseX, mouseY);
+  rotate(-0.25);
+  noStroke();
+  fill(0, 0, 0, 35);              // 물 위 그림자
+  ellipse(5, 12, 50, 100);
+  fill(232, 196, 172);            // 손가락
+  ellipse(0, 22, 46, 92);
+  ellipse(0, -8, 46, 50);         // 손가락 끝
+  fill(238, 178, 175);            // 손톱
+  ellipse(0, -14, 24, 28);
+  pop();
+}
+
 function draw() {
   image(sink, 0, 0);
   system.addParticle();
   system.run();
+  drawFinger();
 }
