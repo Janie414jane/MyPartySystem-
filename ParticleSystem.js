@@ -9,33 +9,14 @@ class ParticleSystem {
     }
 
     run() {
-        for (let i = this.particles.length-1; i >= 0; i--) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
             let p = this.particles[i];
-            p.run();
+            p.applyForce(createVector(0, 0.12)); // 매 프레임 아래 방향 힘 적용
+            p.update();
+            p.display();
             if (p.isDead()) {
-            this.particles.splice(i, 1);
+                this.particles.splice(i, 1);
             }
         }
     }
-
 }
-
-
-// let ParticleSystem = function(position) {
-//   this.origin = position.copy();
-//   this.particles = [];
-// };
-
-// ParticleSystem.prototype.addParticle = function() {
-//   this.particles.push(new Particle(this.origin));
-// };
-
-// ParticleSystem.prototype.run = function() {
-//   for (let i = this.particles.length-1; i >= 0; i--) {
-//     let p = this.particles[i];
-//     p.run();
-//     if (p.isDead()) {
-//       this.particles.splice(i, 1);
-//     }
-//   }
-// };

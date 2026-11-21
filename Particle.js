@@ -1,20 +1,21 @@
 class Particle {
-    constructor(position) {
-        this.acceleration = createVector(0, 0.12);          // 중력으로 물방울이 아래로 떨어짐
+    constructor(position, mass = random(0.8, 1.2)) {
+        this.mass = mass;
+        this.acceleration = createVector(0, 0);
         this.velocity = createVector(random(10, 13), random(-2, 0)); // 앞(오른쪽)으로 물이 분사
         this.position = position.copy();
         this.lifespan = 120;
     }
 
-    run() {
-        this.update();
-        this.display();
+    applyForce(force) {
+        this.acceleration.add(p5.Vector.div(force, this.mass));
     }
 
     update() {
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
         this.lifespan -= 4;
+        this.acceleration.mult(0);
     }
 
     display() {
@@ -27,38 +28,3 @@ class Particle {
         return this.lifespan < 0;
     }
 }
-
-
-
-// // A simple Particle class
-// let Particle = function(position) {
-//   this.acceleration = createVector(0, 0.05);
-//   this.velocity = createVector(random(-1, 1), random(-1, 0));
-//   this.position = position.copy();
-//   this.lifespan = 255;
-// };
-
-// Particle.prototype.run = function() {
-//   this.update();
-//   this.display();
-// };
-
-// // Method to update position
-// Particle.prototype.update = function(){
-//   this.velocity.add(this.acceleration);
-//   this.position.add(this.velocity);
-//   this.lifespan -= 2;
-// };
-
-// // Method to display
-// Particle.prototype.display = function() {
-//   stroke(200, this.lifespan);
-//   strokeWeight(2);
-//   fill(127, this.lifespan);
-//   ellipse(this.position.x, this.position.y, 12, 12);
-// };
-
-// // Is the particle still useful?
-// Particle.prototype.isDead = function(){
-//   return this.lifespan < 0;
-// };
