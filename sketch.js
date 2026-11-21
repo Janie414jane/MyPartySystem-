@@ -24,7 +24,8 @@ function draw() {
   drawWateringCan(canX, canY);
 
   system.addParticle();
-  system.run();
+  // 마우스를 누르는 동안 물방울에 위쪽 힘 추가
+  system.run(mouseIsPressed ? createVector(0, -0.3) : null);
 }
 
 // 왼쪽 물뿌리개 (x, y = 몸통 왼쪽 위 모서리)
