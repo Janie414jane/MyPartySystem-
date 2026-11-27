@@ -1,64 +1,112 @@
-let system, sink;
+const GREET = 'MERRY CHRISTMAS 2026';
+const SPIN = 0.35; // rad per second
+let system;
+let snow = [];
+let elapsed = 0;
+let paused = false;
 
 function setup() {
-  createCanvas(720, 400);
-  sink = createGraphics(width, height);
-  drawSink();
-  system = new ParticleSystem(createVector(width / 2, height / 2));
+    const canvas = createCanvas(720, 900);
+    canvas.parent('tree-canvas');
+    canvas.attribute('role', 'img');
+    canvas.attribute('aria-label', '색색의 문자와 전구로 만든 회전하는 크리스마스트리');
+    pixelDensity(min(window.devicePixelRatio || 1, 2));
+    frameRate(30);
+    textFont('monospace');
+    textAlign(CENTER, CENTER);
+    system = new ParticleSystem(createVector(360, 405));
+    for (let i = 0; i < 150; i++) {
+        snow.push({ x: random(width), y: random(height), speed: random(3, 14), phase: random(TWO_PI), size: random(8, 15) });
+    }
+    paused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById('toggle-motion').addEventListener('click', () => {
+        paused = !paused;
+        updatePlayback();
+    });
+    updatePlayback();
 }
 
-function drawSink() {
-  // 세면대 상판
-  sink.background(32, 35, 38);
-
-  // 분지 테두리
-  sink.noStroke();
-  sink.fill(125, 132, 136);
-  sink.ellipse(width / 2, height / 2, 660, 350);
-
-  // 물
-  sink.fill(22, 68, 88);
-  sink.ellipse(width / 2, height / 2, 620, 310);
-
-  // 물결 무늬
-  sink.noFill();
-  sink.stroke(140, 195, 215, 35);
-  sink.strokeWeight(2);
-  for (let i = 0; i < 4; i++) {
-    sink.arc(width / 2 - 150 + i * 90, height / 2 - 70 + i * 35, 200, 45, PI, TWO_PI);
-  }
-
-  // 배수구
-  sink.noStroke();
-  sink.fill(8, 16, 20);
-  sink.ellipse(width / 2, height / 2 + 108, 46, 22);
-  sink.fill(90, 100, 105);
-  sink.ellipse(width / 2, height / 2 + 108, 32, 14);
-
-  // 수전
-  sink.fill(160, 166, 168);
-  sink.rect(width / 2 - 8, 0, 16, 58, 6);
-  sink.rect(width / 2 - 8, 52, 66, 14, 6);
-}
-
-function drawFinger() {
-  push();
-  translate(mouseX, mouseY);
-  rotate(-0.25);
-  noStroke();
-  fill(0, 0, 0, 35);              // 물 위 그림자
-  ellipse(5, 12, 50, 100);
-  fill(232, 196, 172);            // 손가락
-  ellipse(0, 22, 46, 92);
-  ellipse(0, -8, 46, 50);         // 손가락 끝
-  fill(238, 178, 175);            // 손톱
-  ellipse(0, -14, 24, 28);
-  pop();
+function updatePlayback() {
+    document.getElementById('toggle-motion').textContent = paused ? '▶ 재생' : 'Ⅱ 일시정지';
+    document.getElementById('toggle-motion').setAttribute('aria-pressed', String(paused));
+    document.getElementById('playback-state').textContent = paused ? 'paused' : 'running';
 }
 
 function draw() {
-  image(sink, 0, 0);
-  system.addParticle();
-  system.run();
-  drawFinger();
+    const dt = paused ? 0 : min(deltaTime / 1000, 0.1);
+    elapsed += dt;
+    background(13, 20, 40);
+    noStroke();
+    for (const flake of snow) {
+        flake.y = (flake.y + flake.speed * dt) % height;
+        fill(150, 172, 218, 65 + 55 * sin(elapsed + flake.phase));
+        textSize(flake.size);
+        text(flake.size > 12 ? '*' : '·', flake.x + sin(elapsed * 0.25 + flake.phase) * 6, flake.y);
+    }
+    system.run(elapsed, elapsed * SPIN);
+    drawStar();
+    drawOverlay();
+    if (frameCount % 15 === 0) document.getElementById('fps').textContent = `${round(frameRate())} fps`;
+}
+
+function drawStar() {
+    const star = ['       *       ', '      ***      ', '      ***      ', '***************', '  ***********  ', '    *******    ', '   **** ****   ', '   **     **   '];
+    textSize(12);
+    fill(255, 232, 109);
+    drawingContext.shadowColor = '#ffe56d';
+    drawingContext.shadowBlur = 12 + 4 * sin(elapsed * 3);
+    star.forEach((line, index) => text(line, 360, 22 + index * 11));
+    drawingContext.shadowBlur = 0;
+}
+
+function drawOverlay() {
+    textAlign(LEFT, CENTER);
+    fill(228, 233, 245);
+    textSize(26);
+    text('@Janie', 28, 44);
+    textSize(16);
+    fill(136, 147, 173);
+    text(`rotation ${((elapsed * SPIN * 180 / PI) % 360).toFixed(2)}°`, 28, 80);
+    text(`lights   ${system.lightCount}`, 28, 104);
+    text(`letters  ${system.visibleCount.toLocaleString()}`, 28, 128);
+    fill(255, 173, 65);
+    circle(599, 49, 9);
+    fill(136, 147, 173);
+    text(`t ${elapsed.toFixed(1)}s`, 615, 49);
+    textAlign(CENTER, CENTER);
+    fill(255, 222, 93);
+    drawingContext.shadowColor = '#ffce44';
+    drawingContext.shadowBlur = 14;
+    drawPixelGreeting(GREET, 360, 860);
+    if (paused || floor(elapsed * 2) % 2 === 0) rect(603, 835, 4, 43);
+    drawingContext.shadowBlur = 0;
+    textStyle(NORMAL);
+}
+
+// 외부 폰트 없이 작은 사각형으로 레퍼런스의 픽셀 글씨를 그립니다.
+function drawPixelGreeting(message, centerX, centerY) {
+    const glyphs = {
+        M: ['10001','11011','10101','10101','10001','10001','10001'],
+        E: ['11111','10000','10000','11110','10000','10000','11111'],
+        R: ['11110','10001','10001','11110','10100','10010','10001'],
+        Y: ['10001','10001','01010','00100','00100','00100','00100'],
+        C: ['01111','10000','10000','10000','10000','10000','01111'],
+        H: ['10001','10001','10001','11111','10001','10001','10001'],
+        I: ['11111','00100','00100','00100','00100','00100','11111'],
+        S: ['01111','10000','10000','01110','00001','00001','11110'],
+        T: ['11111','00100','00100','00100','00100','00100','00100'],
+        A: ['01110','10001','10001','11111','10001','10001','10001'],
+        '2': ['01110','10001','00001','00010','00100','01000','11111'],
+        '0': ['01110','10001','10011','10101','11001','10001','01110'],
+        '6': ['01110','10000','10000','11110','10001','10001','01110']
+    };
+    const pixel = 4.2;
+    const startX = centerX - (message.length * 6 - 1) * pixel / 2;
+    [...message].forEach((letter, index) => {
+        const glyph = glyphs[letter];
+        if (!glyph) return;
+        glyph.forEach((row, y) => [...row].forEach((bit, x) => {
+            if (bit === '1') rect(startX + (index * 6 + x) * pixel, centerY - 14 + y * pixel, pixel - 0.3, pixel - 0.3);
+        }));
+    });
 }

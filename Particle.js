@@ -1,104 +1,25 @@
+// 트리 표면을 구성하는 3차원 문자 입자
 class Particle {
-    constructor(position) {
-        this.acceleration = createVector(0, 0);
-        // 모든 방향으로 천천히 퍼지도록 랜덤 초기 속도
-        this.velocity = p5.Vector.random2D().mult(random(0.2, 0.8));
+    constructor(position, character, color, light = false) {
         this.position = position.copy();
-        this.lifespan = 255;
+        this.character = character;
+        this.color = color;
+        this.light = light;
+        this.phase = random(TWO_PI);
     }
 
-    run() {
-        this.update();
-        this.display();
+    project(rotation) {
+        const x = this.position.x * cos(rotation) + this.position.z * sin(rotation);
+        const z = -this.position.x * sin(rotation) + this.position.z * cos(rotation);
+        const scale = 1000 / (1000 - z);
+        return { x: x * scale, y: this.position.y, z };
     }
 
-    update() {
-        let center = createVector(width / 2, height / 2);
-
-        // 중심에서 바깥으로 밀어내는 힘 (바이러스가 퍼져나감)
-        let away = p5.Vector.sub(this.position, center);
-        if (away.mag() > 0) away.normalize().mult(0.015);
-
-        // 물 위의 완만한 흐름 (무리끼리 같이 도는 느낌)
-        let swirl = createVector(-away.y, away.x);
-        if (swirl.mag() > 0) swirl.normalize().mult(0.02);
-
-        // 물결 요동
-        let jitter = p5.Vector.random2D().mult(0.25);
-
-        this.acceleration = p5.Vector.add(away, swirl).add(jitter);
-
-        // 손가락을 중심으로 세균이 사방으로 밀려남
-        if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
-            let fromFinger = p5.Vector.sub(this.position, createVector(mouseX, mouseY));
-            let fd = fromFinger.mag();
-            if (fd > 0 && fd < 120) {
-                let push = map(fd, 0, 120, 0.6, 0); // 가까울수록 강하게
-                this.acceleration.add(fromFinger.normalize().mult(push));
-            }
-        }
-
-        // 세면대 물 영역(타원) 안에 머물기
-        let nx = (this.position.x - width / 2) / 300;
-        let ny = (this.position.y - height / 2) / 145;
-        if (nx * nx + ny * ny > 1) {
-            let back = p5.Vector.sub(center, this.position);
-            if (back.mag() > 0) this.acceleration.add(back.normalize().mult(0.35));
-        }
-
-        this.velocity.add(this.acceleration);
-        this.velocity.mult(0.9); // 물 위라 잘 멈춤
-        this.position.add(this.velocity);
-        this.lifespan -= 0.4;
-    }
-
-    display() {
-        stroke(120, 220, 140, this.lifespan * 0.5); // 흐름 꼬리
-        strokeWeight(2);
-        line(this.position.x - this.velocity.x * 8,
-             this.position.y - this.velocity.y * 8,
-             this.position.x, this.position.y);
-        noStroke();
-        fill(120, 220, 140, this.lifespan); // 바이러스 같은 연한 초록색
-        ellipse(this.position.x, this.position.y, 6, 6);
-    }
-
-    isDead() {
-        return this.lifespan < 0;
+    display(x, y, time, depth) {
+        const brightness = map(depth, -280, 280, 0.65, 1, true) * (0.9 + 0.1 * sin(time * 2.5 + this.phase));
+        fill(...this.color.map(value => value * brightness));
+        drawingContext.shadowColor = `rgb(${this.color.join(',')})`;
+        drawingContext.shadowBlur = this.light ? 7 : 0;
+        text(this.character, x, y);
     }
 }
-
-
-
-// // A simple Particle class
-// let Particle = function(position) {
-//   this.acceleration = createVector(0, 0.05);
-//   this.velocity = createVector(random(-1, 1), random(-1, 0));
-//   this.position = position.copy();
-//   this.lifespan = 255;
-// };
-
-// Particle.prototype.run = function() {
-//   this.update();
-//   this.display();
-// };
-
-// // Method to update position
-// Particle.prototype.update = function(){
-//   this.velocity.add(this.acceleration);
-//   this.position.add(this.velocity);
-//   this.lifespan -= 2;
-// };
-
-// // Method to display
-// Particle.prototype.display = function() {
-//   stroke(200, this.lifespan);
-//   strokeWeight(2);
-//   fill(127, this.lifespan);
-//   ellipse(this.position.x, this.position.y, 12, 12);
-// };
-
-// // Is the particle still useful?
-// Particle.prototype.isDead = function(){
-//   return this.lifespan < 0;
-// };
