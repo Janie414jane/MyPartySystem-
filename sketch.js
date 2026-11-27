@@ -5,6 +5,7 @@ let snow = [];
 let elapsed = 0;
 let paused = false;
 let joystick = 0;
+let sparkles;
 
 function setup() {
     const canvas = createCanvas(720, 900);
@@ -16,6 +17,8 @@ function setup() {
     textFont('monospace');
     textAlign(CENTER, CENTER);
     system = new ParticleSystem(createVector(360, 405));
+    sparkles = new SparkleSystem();
+    for (let i = 0; i < 32; i++) sparkles.emit(system, true);
     for (let i = 0; i < 150; i++) {
         snow.push({ x: random(width), y: random(height), speed: random(3, 14), phase: random(TWO_PI), size: random(8, 15) });
     }
@@ -70,8 +73,10 @@ function draw() {
         text(flake.size > 12 ? '*' : '·', flake.x + sin(elapsed * 0.25 + flake.phase) * 6, flake.y);
     }
     system.updateMotion(joystick, dt);
+    sparkles.update(system, elapsed, dt);
     drawForces();
     system.run(elapsed, elapsed * SPIN);
+    sparkles.display(elapsed);
     drawStar();
     drawOverlay();
     if (frameCount % 5 === 0) {
