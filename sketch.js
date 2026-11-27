@@ -4,6 +4,7 @@ let system;
 let snow = [];
 let elapsed = 0;
 let paused = false;
+let joystick = 0;
 
 function setup() {
     const canvas = createCanvas(720, 900);
@@ -24,12 +25,37 @@ function setup() {
         updatePlayback();
     });
     updatePlayback();
+    setupJoystick();
+}
+
+function setupJoystick() {
+    const stick = document.getElementById('joystick');
+    const reset = () => {
+        stick.value = 0;
+        joystick = 0;
+        stick.setAttribute('aria-valuetext', '중앙');
+    };
+    stick.addEventListener('input', () => {
+        joystick = Number(stick.value) / 100;
+        stick.setAttribute('aria-valuetext', joystick === 0 ? '중앙' : `${joystick < 0 ? '왼쪽' : '오른쪽'} ${Math.abs(Number(stick.value))}%`);
+    });
+    // 범위 입력의 기본 드래그와 키보드 조작을 사용합니다.
+    window.addEventListener('pointerup', reset);
+    window.addEventListener('pointercancel', reset);
+    window.addEventListener('blur', reset);
+    stick.addEventListener('blur', reset);
+    stick.addEventListener('keyup', reset);
 }
 
 function updatePlayback() {
     document.getElementById('toggle-motion').textContent = paused ? '▶ 재생' : 'Ⅱ 일시정지';
     document.getElementById('toggle-motion').setAttribute('aria-pressed', String(paused));
     document.getElementById('playback-state').textContent = paused ? 'paused' : 'running';
+    document.getElementById('joystick').disabled = paused;
+    if (paused) {
+        joystick = 0;
+        document.getElementById('joystick').value = 0;
+    }
 }
 
 function draw() {
@@ -43,10 +69,36 @@ function draw() {
         textSize(flake.size);
         text(flake.size > 12 ? '*' : '·', flake.x + sin(elapsed * 0.25 + flake.phase) * 6, flake.y);
     }
+    system.updateMotion(joystick, dt);
+    drawForces();
     system.run(elapsed, elapsed * SPIN);
     drawStar();
     drawOverlay();
-    if (frameCount % 15 === 0) document.getElementById('fps').textContent = `${round(frameRate())} fps`;
+    if (frameCount % 5 === 0) {
+        document.getElementById('fps').textContent = `${round(frameRate())} fps`;
+        document.getElementById('force-readout').textContent = `x ${(system.origin.x - system.home.x).toFixed(0)}`;
+    }
+}
+
+function drawForces() {
+    if (Math.abs(joystick) < 0.01) return;
+    push();
+    textSize(12);
+    textAlign(CENTER, CENTER);
+    const markers = [
+        { x: system.attractorX, color: '#6cdbff' },
+        { x: system.repellerX, color: '#ff789b' }
+    ];
+    for (const marker of markers) {
+        stroke(marker.color);
+        strokeWeight(1);
+        noFill();
+        circle(marker.x, 805, 20 + sin(elapsed * 4) * 3);
+        line(marker.x, 805, system.origin.x, 805);
+        noStroke();
+        fill(marker.color);
+    }
+    pop();
 }
 
 function drawStar() {
@@ -55,7 +107,7 @@ function drawStar() {
     fill(255, 232, 109);
     drawingContext.shadowColor = '#ffe56d';
     drawingContext.shadowBlur = 12 + 4 * sin(elapsed * 3);
-    star.forEach((line, index) => text(line, 360, 22 + index * 11));
+    star.forEach((line, index) => text(line, system.origin.x, 22 + index * 11));
     drawingContext.shadowBlur = 0;
 }
 

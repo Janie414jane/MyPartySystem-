@@ -11,6 +11,16 @@
   <body>
     <main class="workspace" aria-label="크리스마스 코드 트리">
       <section id="tree-canvas" aria-label="ASCII 크리스마스트리"></section>
+      <section class="controller" aria-label="트리 이동 조이스틱">
+        <div class="controller-title"><label for="joystick">↔ TREE JOYSTICK</label><span>끌어서 이동 · 놓으면 중앙 복귀</span></div>
+        <div class="joystick-track">
+          <span aria-hidden="true">←</span>
+          <input id="joystick" type="range" min="-100" max="100" step="5" value="0" aria-valuetext="중앙" aria-describedby="joystick-help" />
+          <span aria-hidden="true">→</span>
+        </div>
+        <p id="joystick-help">마우스·터치로 조작하거나, 조이스틱 선택 후 ← → 키를 누르세요.</p>
+        <output id="force-readout">x 0</output>
+      </section>
       <section class="editor" aria-label="트리 코드 미리보기">
         <header class="editor-bar">
           <span>christmas_tree.js</span>

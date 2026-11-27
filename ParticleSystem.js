@@ -1,6 +1,12 @@
 class ParticleSystem {
     constructor(position) {
         this.origin = position.copy();
+        this.home = position.copy();
+        this.velocity = 0;
+        this.attractorX = position.x;
+        this.repellerX = position.x;
+        this.attraction = 0;
+        this.repulsion = 0;
         this.particles = [];
         this.lightCount = 0;
         const colors = [[255, 222, 88], [255, 87, 106], [98, 218, 255], [225, 119, 255]];
@@ -32,12 +38,36 @@ class ParticleSystem {
         }
     }
 
+    updateMotion(input, dt) {
+        // Attractor: 목표 지점으로 향하는 스프링 힘 F = k(target - x).
+        this.attractorX = this.home.x + input * 85;
+        // Repeller: 입력 반대쪽에 배치. 거리 제곱에 반비례하는 반발력.
+        this.repellerX = this.home.x - Math.sign(input) * 180;
+        // 작은 고정 간격으로 적분하여 프레임 속도에 관계없이 안정적으로 움직입니다.
+        let remaining = dt;
+        while (remaining > 0) {
+            const step = Math.min(remaining, 1 / 120);
+            this.attraction = (this.attractorX - this.origin.x) * 16;
+            const distance = this.origin.x - this.repellerX;
+            this.repulsion = Math.sign(distance) * Math.abs(input) * 1800000 / (distance * distance + 3600);
+            const acceleration = this.attraction + this.repulsion - this.velocity * 6;
+            this.velocity += acceleration * step;
+            this.origin.x += this.velocity * step;
+            // 화면 밖으로 나가지 않도록 이동 범위를 제한합니다.
+            if (Math.abs(this.origin.x - this.home.x) > 100) {
+                this.origin.x = this.home.x + Math.sign(this.origin.x - this.home.x) * 100;
+                this.velocity = 0;
+            }
+            remaining -= step;
+        }
+    }
+
     run(time, rotation) {
         // 문자 셀마다 가장 가까운 입자만 표시합니다.
         const cells = new Map();
         for (const particle of this.particles) {
             const point = particle.project(rotation);
-            const col = round(point.x / 9);
+            const col = round(point.x * 0.76 / 9);
             const row = round(point.y / 12);
             const key = `${col},${row}`;
             if (!cells.has(key) || point.z > cells.get(key).point.z) {
